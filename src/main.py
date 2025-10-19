@@ -62,7 +62,7 @@ def fetch_save_and_delete_email(folder: str, msg_id: bytes, account_save_dir: st
         if isinstance(response_part, tuple):
             raw_email = response_part[1]
             save_email(folder, msg_id, raw_email, account_save_dir)
-            print(f"Saved email {msg_id.decode('utf-8')} in folder {folder}")
+            #print(f"Saved email {msg_id.decode('utf-8')} in folder {folder}")
 
     status, _ = mail.store(str(int(msg_id)), '+FLAGS', '\\Deleted')
     if status != 'OK': raise Exception(f'Unable to mark {msg_id} as deleted in folder {msg_id}')
@@ -77,7 +77,7 @@ def process_folder(folder: str, account_save_dir: str, username: str, password: 
 
     global found_emails
 
-    print(f"Processing folder: {folder}")
+    #print(f"Processing folder: {folder}")
 
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     status, _ = mail.login(username, password)
@@ -97,16 +97,21 @@ def process_folder(folder: str, account_save_dir: str, username: str, password: 
         mail.logout()
     email_ids = data[0].split()
 
-    if len(email_ids) > 0: found_emails = True
+    if len(email_ids) > 0:
+        found_emails = True
+        print(f'Found {len(email_ids)} e-mails in {folder} for {username}')
 
-    print(f"Folder '{folder}' has {len(email_ids)} emails.")
+    #print(f"Folder '{folder}' has {len(email_ids)} emails.")
 
     for msg_id in email_ids:
-        fetch_save_and_delete_email(folder, msg_id, account_save_dir, mail)
+        try:
+            fetch_save_and_delete_email(folder, msg_id, account_save_dir, mail)
+        except Exception as e:
+            print('*'*10)
+            break
 
     mail.close()
     mail.logout()
-
 
 def proccess_accounts():
     accounts_file = open(os.path.dirname(__file__)+'/accounts.csv','r')
@@ -118,6 +123,7 @@ def proccess_accounts():
     for account in accounts:
         username, password = account
         if password == '': continue
+        print(f'Account: {username}, {password}')
         account_save_dir = SAVEDIR+'/'+username+'/'+REFERENCEDATE+'_'+str(datetime.timestamp(datetime.now()))
         os.makedirs(account_save_dir, exist_ok=True)
         folders = [folder.split('"." ')[-1].replace('"', '') for folder in list_folders(username, password)]

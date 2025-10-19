@@ -9,6 +9,13 @@ A simple Python script to download emails via IMAP from all folders. Each folder
 
 ## Setup
 
+* Create and enable a virtual environment
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
 1. Install the required package:
 
    ```bash

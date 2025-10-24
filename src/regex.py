@@ -1,4 +1,6 @@
 import re
+from email import utils
+from typing import Optional
 
 email_from = re.compile('From: .*<(.*)>')
 email_to = re.compile('To: .*<(.*)>')
@@ -13,4 +15,11 @@ date_minuts = re.compile('^Date: .*:([0-9]{2}):')
 date_seconds = re.compile('^Date: .*:([0-9]{2}) ')
 date_zone = re.compile('^Date: .*( [+-]?[0-9]{4})$')
 
-#Date: Fri, 14 Feb 2020 09:56:35 +0100
+def find_first(regex: re.Pattern[str], string: str) -> Optional[str]:
+    results = regex.findall(string)
+    return None if len(results) == 0 else results[0]
+
+def find_datetime(regex, content) -> Optional[str]:
+    datetime_string = find_first(regex, content)
+    if datetime_string == None: return None 
+    return utils.parsedate_to_datetime(datetime_string).isoformat()

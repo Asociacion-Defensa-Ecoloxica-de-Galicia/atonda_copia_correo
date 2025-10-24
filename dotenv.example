@@ -1,1 +1,2 @@
-EMAILS_PATH="./email_backups"
+EMAILS_PATH="./backups"
+DESTINATION_PATH="./new_emails_folder"

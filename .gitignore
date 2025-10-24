@@ -2,3 +2,5 @@ venv
 .aider*
 .env
 emails
+email_backups/
+__pycache__/

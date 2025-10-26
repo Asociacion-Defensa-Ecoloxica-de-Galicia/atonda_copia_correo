@@ -1,8 +1,62 @@
+from logging import exception
 import os
 from local_types import EmailData, FoldersTree
-import regex
-
+import email as email_tools
 EXTENSION='eml'
+
+async def get_children_folders(current_path: str) -> list[str]:
+    folder_content = os.listdir(current_path)
+    return list(filter(lambda child_path: os.path.isdir(f'{current_path}/{child_path}'), folder_content))
+
+async def get_emails_iterations(source_path: str, emails: list[str]) -> dict[str,list[str]]:
+    email_iterations = {}
+    for email in [ {'path': f'{source_path}/{email}','address': email} for email in emails]:
+        iterations = await get_children_folders(email['path'])
+        email_iterations[email['address']] = iterations
+    return email_iterations
+
+async def get_email_iterations_and_trays(source_path: str, email_iterations: dict[str,list[str]]) -> dict[str,dict[str,list[str]]]:
+    output: dict[str,dict[str,list[str]]] = {}
+    for  email, iterations in email_iterations.items():
+        trays = set()
+        for iteration_path in [ f'{source_path}/{email}/{iteration}' for iteration in iterations ]:
+            trays.update(await get_children_folders(iteration_path))
+        output[email] = {'iterations': iterations, 'trays': list(trays)}
+    return output
+
+async def copy_email_files(source_path: str, destination_folder: str, email_iterations_and_trays: dict[str,dict[str,list[str]]]):
+    for email, email_data in email_iterations_and_trays.items():
+        for iteration in email_data['iterations']:
+            for tray in email_data['trays']:
+                path = f'{source_path}/{email}/{iteration}/{tray}'
+                if os.path.isdir(path):
+                    path_contents = os.listdir(path)
+                    email_files = list(filter(lambda item: os.path.isfile(f'{path}/{item}'),path_contents))
+                    for email_file in email_files:
+                        # content = await get_email_content(f'{path}/{email_file}')
+                        source_email_file = f'{path}/{email_file}'
+                        email_metadata = email_tools.message_from_binary_file(open(source_email_file,'rb'))
+                        source_email = EmailData(
+                            email_metadata['from'] or '',
+                            email_metadata['to'] or '',
+                            email_metadata['subject'] or '',
+                            email_metadata['date'] or '',
+                            #content
+                        )
+                        email_destination_folder_path = f'{destination_folder}/{email}/{tray}'
+                        create_folder_if_not_exists(email_destination_folder_path)
+                        destination_email_file = get_unique_email_file_name(email_destination_folder_path, source_email)
+                        try:
+                            create_email_file(destination_email_file)
+                            await move_email(source_email_file, destination_email_file)
+                        except Exception as exception:
+                            error_log_file = open('log_errors.txt', 'a')
+                            error_log_file.write(f'"{source_email_file}": "{exception}"\n')
+                            error_log_file.close()
+                        else:
+                            log_file = open('log.txt', 'a')
+                            log_file.write(f'"{source_email_file}";"{destination_email_file}"\n')
+                            log_file.close()
 
 async def get_folder_tree(path: str) -> FoldersTree:
     folder_content = os.listdir(path)
@@ -10,22 +64,14 @@ async def get_folder_tree(path: str) -> FoldersTree:
     child_folders = [ await get_folder_tree(f'{path}/{folder_path}') for folder_path in child_folders_paths ]
     return FoldersTree(path,child_folders)
 
-def get_email_data(email_path: str) -> EmailData:
-    file = open(email_path, 'r')
-    content = file.read()
-    return EmailData(
-        regex.find_first(regex.email_from, content),
-        regex.find_first(regex.email_to, content),
-        regex.find_first(regex.email_subject, content),
-        regex.find_datetime(regex.email_date, content),
-        regex.find_first(regex.email_id, content),
-        content
-    )
+async def get_email_content(email_path: str) -> bytes:
+    file = open(email_path, 'rb')
+    return file.read()
 
 def create_folder_if_not_exists(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
-def unique_email_file_name(path: str, email: EmailData) -> str:
+def get_unique_email_file_name(path: str, email: EmailData) -> str:
     proposed_file_path_without_extension = f'{path}/{email.file_name}'
     counter=0
     file_path_without_extension = f'{proposed_file_path_without_extension}' if counter < 1 else f'{proposed_file_path_without_extension}({counter})'
@@ -41,13 +87,10 @@ def create_email_file(email_file_path: str) -> None:
     email_file.write('')
     email_file.close()
 
-def save_email_content_to_file(email_file_path: str, email: EmailData) -> None:
-    email_file = open(email_file_path, 'w')
-    email_file.write(email.content)
-    email_file.close()
+# async def save_email_content_to_file(email_file_path: str, email: EmailData) -> None:
+#     email_file = open(email_file_path, 'wb')
+#     email_file.write(email.content)
+#     email_file.close()
 
-def email_to_file(path: str, email: EmailData) -> None:
-    create_folder_if_not_exists(path)
-    email_file_path = unique_email_file_name(path, email)
-    create_email_file(email_file_path)
-    save_email_content_to_file(email_file_path, email)
+async def move_email(source_email_file: str, destination_email_file: str) -> None:
+    os.replace(source_email_file, destination_email_file)

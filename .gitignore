@@ -3,4 +3,8 @@ venv
 .env
 emails
 email_backups/
+email_backups_orixinal/
+new_emails_folder/
+log.txt
+log_errors.txt
 __pycache__/

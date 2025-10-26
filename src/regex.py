@@ -1,5 +1,5 @@
 import re
-from email import utils
+from email import utils, message_from_file
 from typing import Optional
 
 email_from = re.compile('From: .*<(.*)>')

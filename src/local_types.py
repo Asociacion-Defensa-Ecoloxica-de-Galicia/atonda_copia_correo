@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List, Self
+from slugify import slugify
 
 @dataclass
 class EmailData:
@@ -7,11 +8,12 @@ class EmailData:
     destination: Optional[str]
     subject: Optional[str]
     date: Optional[str]
-    msg_id: Optional[str]
-    content: str
+    #content: bytes
     @property
     def file_name(self):
-        return f'from_{self.source}_to_{self.destination}_{self.subject}_{self.date}'
+        subject = str(self.subject) or ''
+        subject = subject if len(subject) <= 150 else f'{subject[0:147]}...'
+        return slugify(f'{subject}_{self.date}')
 
 @dataclass
 class FoldersTree:

@@ -33,15 +33,13 @@ async def copy_email_files(source_path: str, destination_folder: str, email_iter
                     path_contents = os.listdir(path)
                     email_files = list(filter(lambda item: os.path.isfile(f'{path}/{item}'),path_contents))
                     for email_file in email_files:
-                        # content = await get_email_content(f'{path}/{email_file}')
                         source_email_file = f'{path}/{email_file}'
                         email_metadata = email_tools.message_from_binary_file(open(source_email_file,'rb'))
                         source_email = EmailData(
                             email_metadata['from'] or '',
                             email_metadata['to'] or '',
-                            email_metadata['subject'] or '',
+                            str(email_metadata['subject'] or ''),
                             email_metadata['date'] or '',
-                            #content
                         )
                         email_destination_folder_path = f'{destination_folder}/{email}/{tray}'
                         create_folder_if_not_exists(email_destination_folder_path)

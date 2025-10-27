@@ -11,12 +11,12 @@ class EmailData:
     date: str
     @property
     def file_name(self):
-        subject = self.subject if len(self.subject or '') <= 100 else f'{(self.subject or '')[0:97]}...'
+        subject = self.subject if len(self.subject) <= 100 else f'{(self.subject)[0:97]}...'
         try:
             date = str(email_utils.parsedate_to_datetime(self.date))
         except:
             date = ''
-        return slugify(f'{date}_{email_utils.parseaddr(self.source)[1]}_{email_utils.parseaddr(self.destination or '')}_{subject}')
+        return slugify(f'{date}_{email_utils.parseaddr(self.source)[1]}_{email_utils.parseaddr(self.destination)}_{subject}')
 
 @dataclass
 class FoldersTree:

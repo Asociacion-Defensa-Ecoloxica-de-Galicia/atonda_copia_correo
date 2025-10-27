@@ -11,7 +11,7 @@ class EmailData:
     date: str
     @property
     def file_name(self):
-        subject = self.subject if len(self.subject) <= 100 else f'{(self.subject)[0:97]}...'
+        subject = self.subject if len(self.subject) <= 100 else f'{self.subject[0:97]}...'
         try:
             date = str(email_utils.parsedate_to_datetime(self.date))
         except:

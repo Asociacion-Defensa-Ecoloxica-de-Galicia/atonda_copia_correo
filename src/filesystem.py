@@ -60,17 +60,17 @@ async def copy_email_files(source_path: str, destination_folder: str, email_iter
                         email_destination_folder_path = f'{destination_folder}/{email}/{tray}'
                         create_folder_if_not_exists(email_destination_folder_path)
                         destination_email_file = get_unique_email_file_name(email_destination_folder_path, source_email)
-                        # try:
-                        #     create_email_file(destination_email_file)
-                        #     await move_email(source_email_file, destination_email_file)
-                        # except Exception as exception:
-                        #     error_log_file = open('log_errors.txt', 'a')
-                        #     error_log_file.write(f'"{source_email_file}": "{exception}"\n')
-                        #     error_log_file.close()
-                        # else:
-                        #     log_file = open('log.txt', 'a')
-                        #     log_file.write(f'"{source_email_file}";"{destination_email_file}"\n')
-                        #     log_file.close()
+                        try:
+                            create_email_file(destination_email_file)
+                            await move_email(source_email_file, destination_email_file)
+                        except Exception as exception:
+                            error_log_file = open('log_errors.txt', 'a')
+                            error_log_file.write(f'"{source_email_file}": "{exception}"\n')
+                            error_log_file.close()
+                        else:
+                            log_file = open('log.txt', 'a')
+                            log_file.write(f'"{source_email_file}";"{destination_email_file}"\n')
+                            log_file.close()
 
 async def get_folder_tree(path: str) -> FoldersTree:
     folder_content = os.listdir(path)

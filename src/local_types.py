@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Self
+from typing import List, Self
 from slugify import slugify
 from email import utils as email_utils
 
@@ -11,12 +11,14 @@ class EmailData:
     date: str
     @property
     def file_name(self):
-        subject = self.subject if len(self.subject) <= 100 else f'{self.subject[0:97]}...'
         try:
             date = str(email_utils.parsedate_to_datetime(self.date))
         except:
             date = ''
-        return slugify(f'{date}_{email_utils.parseaddr(self.source)[1]}_{email_utils.parseaddr(self.destination)}_{subject}')
+        source = email_utils.parseaddr(self.source)[1]
+        destination = email_utils.parseaddr(self.destination)[1]
+        name =  slugify(f'{date}_{source}_{destination}_{self.subject}') 
+        return name if len(name) <= 200 else f'{name[0:195]}[...]'
 
 @dataclass
 class FoldersTree:
